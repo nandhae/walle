@@ -1,0 +1,113 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'org.springframework.boot:spring-boot-gradle-plugin:2.1.4.RELEASE'
+    }
+}
+
+plugins {
+    id 'org.springframework.boot' version '2.3.2.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    id "org.flywaydb.flyway" version "5.2.4"
+    id 'java'
+    id 'checkstyle'
+    id 'jacoco'
+}
+
+group = 'com.tw'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+test {
+    dependsOn checkstyleMain
+    finalizedBy jacocoTestReport
+}
+
+jacoco {
+    toolVersion = '0.8.3'
+}
+
+jacocoTestReport {
+    group = "codeCoverage"
+    description = "Generate Jacoco coverage reports after running tests."
+
+    reports {
+        html.enabled true
+    }
+}
+task checkstyleHtml {
+    doLast {
+        ant.xslt(in: checkstyleMain.reports.xml.destination,
+                style: file('config/checkstyle-noframes-sorted.xsl'),
+                out: new File(checkstyleMain.reports.xml.destination.parent, 'codeCopReport.html'))
+    }
+}
+
+checkstyleMain.finalizedBy checkstyleHtml
+
+checkstyle {
+    toolVersion '8.20'
+    sourceSets = [project.sourceSets.main]
+    configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+    configProperties.checkstyleSuppressionsPath = file("${rootDir}/config/checkstyle/checkstyle-suppressions.xml").absolutePath
+}
+
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.8
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.flywaydb:flyway-core'
+    compile 'org.postgresql:postgresql:42.2.5'
+    compileOnly 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    runtimeOnly 'org.postgresql:postgresql'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+    testCompile group: 'org.mockito', name: 'mockito-junit-jupiter', version: '2.23.0'
+    testCompile group: 'org.mockito', name: 'mockito-core', version: '2.23.0'
+}
+
+flyway {
+    url = 'jdbc:postgresql://localhost:5432/todo'
+    user = 'user'
+    password = 'password'
+    locations = ['db/migration', 'db/seed_data']
+}
+
+test {
+    beforeSuite { suite ->
+        logger.lifecycle("Running " +suite.getName())
+    }
+    beforeTest { descriptor ->
+        logger.lifecycle("\t[Test] - " + descriptor.getName())
+    }
+    useJUnitPlatform()
+}
+

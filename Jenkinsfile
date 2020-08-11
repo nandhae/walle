@@ -1,26 +1,7 @@
 #!/usr/bin/env groovy
 
 pipeline {
-    agent {
-    kubernetes {
-      yaml """
-apiVersion: v1
-kind: Pod
-metadata:
-  labels:
-    walle: walle
-spec:
-  containers:
-  - name: docker
-    image: docker:18.05-dind
-    securityContext:
-        privileged: true
-  - name: java
-    image: java
-    """
-        }
-    }
-
+    agent any
     environment {
         registry = "nandhanido/walle"
         registryCredential = 'dockerhub'
@@ -28,6 +9,16 @@ spec:
     }
 
     stages {
+        stage('gradle build') {
+            steps {
+              container('docker') {
+                script {
+                    sh './gradlew clean build'
+                }
+              }
+            }
+        }
+
         stage('docker build') {
             steps {
               container('docker') {

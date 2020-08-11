@@ -1,0 +1,36 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: walle
+  name: walle
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: walle
+  template:
+    metadata:
+      labels:
+        app: walle
+    spec:
+      containers:
+        - image: nandhanido/walle:latest
+          imagePullPolicy: Always
+          name: walle
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: walle
+  name: walle
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 8888
+  selector:
+    app: walle
+  type: ClusterIP

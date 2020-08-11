@@ -94,13 +94,6 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.23.0'
 }
 
-flyway {
-    url = 'jdbc:postgresql://localhost:5432/todo'
-    user = 'user'
-    password = 'password'
-    locations = ['db/migration', 'db/seed_data']
-}
-
 test {
     beforeSuite { suite ->
         logger.lifecycle("Running " +suite.getName())
